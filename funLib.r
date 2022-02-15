@@ -41,6 +41,16 @@ req_to_df <- function(url, query){
   return(json_cont)
 }
 
+alldataReq <- function(pagemax){
+  dfA <- data.frame()
+  for (i in 1:pagemax){
+    query <- list(per_page=100, page=i)
+    dfB <- req_to_df("https://www.refugerestrooms.org/api/v1/restrooms",
+                     query = query)
+    dfA <- rbind(dfA, dfB)}
+  return(dfB)
+}
+
 df_transfo <- function(df){
   df %>% select(c(name, street, city, state, accessible, unisex, directions, comment))
 } 

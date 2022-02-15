@@ -33,15 +33,18 @@ urlAll = paste0(url_base, url_all)
 
 ```{r}
 source("funLib.r")
-dfA <- data.frame()
 
-for (i in 1:488){
-  query <- list(per_page=100, page=i)
-  dfB <- req_to_df("https://www.refugerestrooms.org/api/v1/restrooms",
+alldataReq <- function(pagemax){
+  dfA <- data.frame()
+  for (i in 1:pagemax){
+    query <- list(per_page=100, page=i)
+    dfB <- req_to_df("https://www.refugerestrooms.org/api/v1/restrooms",
                      query = query)
-  dfA <- rbind(dfA, dfB)
+    dfA <- rbind(dfA, dfB)}
+  return(dfA)
 }
-dfB
+
+res = alldataReq(488)
 ```
 
 
@@ -121,4 +124,17 @@ df2 <- df_transfo(df)
 ```{r}
 resp <- get
 ```
+
+## Statistiques avec le Rdata (full df)
+
+```{r}
+plop %>% group_by(country) %>% ggplot() +
+  aes(x = fct_lump(fct_rev(fct_infreq(country)),10)) +
+  geom_bar()+coord_flip()
+```
+
+```{r}
+plop2 <- plop %>% filter(country == "FR")
+```
+
 
