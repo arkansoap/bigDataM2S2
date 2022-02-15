@@ -1,0 +1,105 @@
+---
+title: "brouillon_app_refuge"
+author: "Thibault FUCHEZ"
+date: "15/02/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(httr)
+library(jsonlite)
+```
+
+## Première requète
+
+```{r}
+url_base = "https://www.refugerestrooms.org/api"
+url_byloc = "/v1/restrooms/by_location"
+url_bydate = "/v1/restrooms/by_date"
+url_bysearch= "/v1/restrooms/search"
+```
+
+```{r}
+urlLoc = paste0(url_base, url_byloc)
+```
+
+```{r}
+query <- list(lng="0.689797", lat="47.390185")
+resp <- GET(urlLoc, query = query)
+```
+
+```{r}
+resp
+```
+
+```{r}
+headers(resp)
+```
+
+```{r}
+http_error(resp)
+```
+
+```{r}
+http_type(resp)
+```
+
+
+```{r}
+# Shows raw data which is not structured and readable
+jsonRespText<-content(resp,as="text") 
+```
+
+```{r}
+# Structurised data in form of R vectors and lists
+jsonRespParsed<-content(resp,as="parsed") 
+```
+
+```{r}
+json_cont <- fromJSON(jsonRespText)
+```
+
+## Fonctions
+
+```{r}
+url_base = "https://www.refugerestrooms.org/api"
+url_byloc = "/v1/restrooms/by_location"
+url_bydate = "/v1/restrooms/by_date"
+url_bysearch= "/v1/restrooms/search"
+```
+
+```{r}
+urlLoc = paste0(url_base, url_byloc)
+```
+
+```{r}
+req_to_df <- function(url, query){
+  resp <- GET(urlLoc, query = query)
+  jsonRespText <- content(resp,as="text")
+  json_cont <- fromJSON(jsonRespText)
+  return(json_cont)
+}
+```
+
+```{r}
+query <- list(lng="0.689797", lat="47.390185")
+df2 <- req_to_df(urlLoc, query_Londres)
+```
+
+```{r}
+df_transfo <- function(df){
+  df %>% select(c(name, street, city, state, accessible, unisex, directions, comment))
+} 
+```
+
+```{r}
+df2 <- df_transfo(df)
+```
+
+
