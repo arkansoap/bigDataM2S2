@@ -23,11 +23,27 @@ url_base = "https://www.refugerestrooms.org/api"
 url_byloc = "/v1/restrooms/by_location"
 url_bydate = "/v1/restrooms/by_date"
 url_bysearch= "/v1/restrooms/search"
+url_all="/v1/restrooms"
 ```
 
 ```{r}
 urlLoc = paste0(url_base, url_byloc)
+urlAll = paste0(url_base, url_all)
 ```
+
+```{r}
+source("funLib.r")
+dfA <- data.frame()
+
+for (i in 1:488){
+  query <- list(per_page=100, page=i)
+  dfB <- req_to_df("https://www.refugerestrooms.org/api/v1/restrooms",
+                     query = query)
+  dfA <- rbind(dfA, dfB)
+}
+dfB
+```
+
 
 ```{r}
 query <- list(lng="0.689797", lat="47.390185")
@@ -102,4 +118,7 @@ df_transfo <- function(df){
 df2 <- df_transfo(df)
 ```
 
+```{r}
+resp <- get
+```
 
