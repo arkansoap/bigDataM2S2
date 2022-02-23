@@ -20,8 +20,9 @@ ui <- fluidPage(
           actionButton("coordOk", label = 'valider')
         ),
         wellPanel(
-          checkboxInput("ada", "accessible"),
-          checkboxInput("unisex", "unisexe"),
+          checkboxGroupInput("para", "parametres",
+                             choices = c("ada" = "TRUE", "unisex" = "TRUE")),
+          actionButton("paraOk", label = 'valider')
         )
       ),
       mainPanel(textOutput("selected_city"),
@@ -40,12 +41,23 @@ server <- function(input, output) {
   output$table_city <- renderDataTable({
     variable <- variable(input$city)
     coord <- coord_city(variable)
-    query <- list(lng=coord[[1]], lat=coord[[2]],
-                  per_page=100, ada=input$ada,
-                  unisex=input$unisex)
+    query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100)
+    #query <- list(lng=coord[[1]], lat=coord[[2]],
+    #              per_page=100, ada=input$para[1],
+    #              unisex=input$para[2])
     df <- req_to_df(urlLoc, query = query) %>% df_transfo()
+    })
+  
+  observeEvent({input$para[1];input$para[2];input$city},{
+    variable <- variable(input$city)
+    coord <- coord_city(variable)
+    query <- list(lng=coord[[1]], lat=coord[[2]],
+                  per_page=100, ada=str(input$para[1]),
+                  unisex=str(input$para[2]))
+    df <- req_to_df(urlLoc, query = query) 
   })
-
+  
+  
   output$map <- renderLeaflet({
     variable <- variable(input$city)
     display_map(variable)

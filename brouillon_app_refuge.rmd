@@ -14,6 +14,7 @@ library(tidyverse)
 library(ggplot2)
 library(httr)
 library(jsonlite)
+library(readr)
 ```
 
 ## Première requète
@@ -47,7 +48,6 @@ alldataReq <- function(pagemax){
 res = alldataReq(488)
 ```
 
-
 ```{r}
 query <- list(lng="0.689797", lat="47.390185")
 resp <- GET(urlLoc, query = query)
@@ -68,7 +68,6 @@ http_error(resp)
 ```{r}
 http_type(resp)
 ```
-
 
 ```{r}
 # Shows raw data which is not structured and readable
@@ -128,13 +127,123 @@ resp <- get
 ## Statistiques avec le Rdata (full df)
 
 ```{r}
-plop %>% group_by(country) %>% ggplot() +
+res %>% group_by(country) %>% ggplot() +
   aes(x = fct_lump(fct_rev(fct_infreq(country)),10)) +
   geom_bar()+coord_flip()
 ```
 
+## automatisation à partir de liste de villes
+
 ```{r}
-plop2 <- plop %>% filter(country == "FR")
+source("funLib.r")
 ```
 
+```{r}
+worldcities <- read_csv("worldcities.csv")
+```
+
+```{r}
+nrow(worldcities)
+```
+
+```{r}
+city_Lat <- tablo_coord %>% filter(ville == "Tours") %>% pull(lat)
+```
+
+```{r}
+city_Lng <- worldcities %>% filter(city_ascii == "Tours") %>% pull(lng)
+```
+
+```{r}
+coord_city <- function(obj){
+  city_lat <- tablo_coord %>% filter(ville == obj) %>% pull(lat)
+  city_lng <- tablo_coord %>% filter(ville == obj) %>% pull(lng)
+  return(list(city_lng, city_lat))
+}
+```
+
+```{r}
+test <- coord_city("Tours")
+test
+```
+
+```{r}
+liste_ville = list("Tours", "London")
+```
+
+```{r}
+    variable <- switch(
+      input$city,
+      "Tours" = "Tours",
+      "London" = "London"
+    )
+```
+
+```{r}
+display_map <- function(variable){
+  coord <- coord_city(variable)
+  map = bigmap(coord[[1]],coord[[2]])
+  query <- list(lng=coord[[1]], lat=coord[[2]])
+  df <- req_to_df(urlLoc, query = query)
+  map %>% addMarkers(data = df, lng = ~longitude, lat = ~latitude)
+}
+```
+
+```{r}
+coord <- coord_city("Tours")
+query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100, ada = input$para[1], accessible = inut$para[2])
+```
+
+
+```{r}
+  coord <- coord_city("Tours")
+  map = bigmap(coord[[1]],coord[[2]])
+  query <- list(lng=coord[[1]], lat=coord[[2]])
+  df <- req_to_df(urlLoc, query = query)
+  map %>% addMarkers(data = df, lng = ~longitude, lat = ~latitude)
+```
+
+```{r}
+display_map("London")
+```
+
+```{r}
+ville <- c("Tours", "London")
+lat <- c(47.390185, 51.509865)
+lng <- c(0.689797, -0.118092)
+tablo_coord <- data.frame(ville = ville, lat = lat, lng=lng)
+```
+
+```{r}
+ville_to_df <- function(variable){
+  coord <- coord_city(variable)
+  query <- list(lng=coord[[1]], lat=coord[[2]])
+  req_to_df(urlLoc, query = query) %>% df_transfo()
+  return(df_transfo)
+}
+```
+
+```{r}
+test <- ville_to_df("Tours")
+```
+
+```{r}
+plopp <- df %>% filter(unisex == "TRUE")
+```
+
+```{r}
+  get_table <- eventReactive({
+    input$paraOk
+  }, {
+    df <- df %>% filter(input$paraOk == "TRUE")
+  })
+```
+
+```{r}
+  re <- eventReactive({
+    input$paraOk
+  }, {
+    df <- df %>% filter(accessible == input$para[1])
+  })
+```
 

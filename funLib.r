@@ -12,6 +12,8 @@ library(leaflet)
 ################ Constantes ########################
 ####################################################
 
+worldcities <- read_csv("worldcities.csv")
+
 url_base = "https://www.refugerestrooms.org/api"
 url_byloc = "/v1/restrooms/by_location"
 url_bydate = "/v1/restrooms/by_date"
@@ -21,18 +23,18 @@ url_all="/v1/restrooms"
 urlLoc = paste0(url_base, url_byloc)
 urlAll = paste0(url_base, url_all)
 
-query_Tours <- list(lng="0.689797", lat="47.390185")
-query_Londres <- list(lat="51.509865", lng="-0.118092", per_page="100")
-
-
-latTours = 47.390185
-longTours = 0.689797
-
 totalPage = 488
+
+ville <- c("Tours", "London")
+lat <- c(47.390185, 51.509865)
+lng <- c(0.689797, -0.118092)
+tablo_coord <- data.frame(ville = ville, lat = lat, lng=lng)
 
 ###################################################
 ############## Fonctions ##########################
 ###################################################
+
+################ Requetes to df ###################
 
 req_to_df <- function(url, query){
   resp <- GET(url, query = query)
@@ -51,15 +53,66 @@ alldataReq <- function(pagemax){
   return(dfB)
 }
 
+################### Manip de df ###################
+
 df_transfo <- function(df){
   df %>% select(c(name, street, city, state, accessible, unisex, directions, comment))
 } 
+
+################# Fonctions Map ###################
 
 bigmap <- function(lng, lat){
   map = leaflet() %>% addTiles() %>% setView(lng, lat, zoom = 17)
   return(map)
 }
 
-pinMarker <- function(df){
-  
+coord_city <- function(obj){
+  city_lat <- tablo_coord %>% filter(ville == obj) %>% pull(lat)
+  city_lng <- tablo_coord %>% filter(ville == obj) %>% pull(lng)
+  return(list(city_lng, city_lat))
 }
+
+################# Fonctions var_output ################
+
+variable <- function(input){
+  switch(
+    input,
+    "Tours" = "Tours",
+    "London" = "London"
+  )
+}
+
+################# Fonctions Output ################
+
+ville_to_df <- function(variable){
+  coord <- coord_city(variable)
+  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100)
+  df_transfo <- req_to_df(urlLoc, query = query) %>% df_transfo()
+  return(df_transfo)
+}
+
+display_map <- function(variable){
+  # Prepare the text for the tooltip:
+  coord <- coord_city(variable)
+  map = bigmap(coord[[1]],coord[[2]])
+  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100)
+  df <- req_to_df(urlLoc, query = query)
+  mytext <- paste(
+    "lng: ", df$long, "<br/>", 
+    "lat: ", df$lat, "<br/>",
+    "desc: ", df$directions, "<br/>",
+    "comment: ", df$comment, "<br/>",
+    "ada: ", df$accessible, sep="") %>%
+    lapply(htmltools::HTML)
+  map %>% addMarkers(data = df, lng = ~longitude, lat = ~latitude, label = mytext )
+}
+
+######### brouillon #########
+
+plop <- function(x, df){
+  if (x){
+    df1 <- df %>% filter(accessible =="TRUE")
+  } else {
+    df1 <- df
+  }
+  return(df1)}
