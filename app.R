@@ -14,8 +14,8 @@ ui <- fluidPage(
         ),
         wellPanel(
           splitLayout(
-            numericInput("lng", label = 'lng', 0),
-            numericInput("lat", label = 'lat', 0)
+            textInput("lng", label = 'lng', value = "2.349014" ),
+            textInput("lat", label = 'lat', value = "48.864716")
           ),
           actionButton("coordOk", label = 'valider')
         ),
@@ -24,7 +24,7 @@ ui <- fluidPage(
           checkboxInput("unisex", "unisexe"),
         )
       ),
-      mainPanel(textOutput("selected_city"),
+      mainPanel(dataTableOutput("table_city2"),
                 dataTableOutput("table_city"))
     )),
     tabPanel("Carte", leafletOutput('map')),
@@ -34,22 +34,19 @@ ui <- fluidPage(
 
 #Server code (R)
 server <- function(input, output) {
-  #output$selected_city <-
-  #  renderText({ input$para
-  #})
   output$table_city <- renderDataTable({
-    variable <- variable(input$city)
-    coord <- coord_city(variable)
-    query <- list(lng=coord[[1]], lat=coord[[2]],
-                  per_page=100, ada=input$ada,
-                  unisex=input$unisex)
-    df <- req_to_df(urlLoc, query = query) %>% df_transfo()
+    ville_to_df(input$ada, input$unisex, input$city)
   })
-
   output$map <- renderLeaflet({
-    variable <- variable(input$city)
-    display_map(variable)
+    display_map(input$ada, input$unisex, input$city)
   })
+  df2 <- eventReactive(input$coordOk,{
+    lat <- input$lat
+    long <- input$lng
+    query <- list(lng=long, lat=lat, per_page=100, ada=input$ada, unisex=input$unisex)
+    df_trans <- req_to_df(urlLoc, query = query) 
+  })
+  output$table_city2 <- renderDataTable({df2()})
 }
 
 # to run app

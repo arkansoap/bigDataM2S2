@@ -7,6 +7,7 @@ library(ggplot2)
 library(httr)
 library(jsonlite)
 library(leaflet)
+library(leaflet.providers)
 
 ####################################################
 ################ Constantes ########################
@@ -84,15 +85,42 @@ variable <- function(input){
 
 ################# Fonctions Output ################
 
-ville_to_df <- function(variable){
+ville_to_df <- function(ada, unisex, city){
+  variable <- variable(city)
   coord <- coord_city(variable)
-  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100)
+  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100, ada=ada, unisex=unisex)
   df_transfo <- req_to_df(urlLoc, query = query) %>% df_transfo()
   return(df_transfo)
 }
 
-display_map <- function(variable){
-  # Prepare the text for the tooltip:
+ville_to_df2 <- function(coord, ada, unisex, city){
+  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100, ada=ada, unisex=unisex)
+  df_transfo <- req_to_df(urlLoc, query = query) %>% df_transfo()
+  return(df_transfo)
+}
+
+display_map <- function(ada, unisex, city){
+  variable <- variable(city)
+  coord <- coord_city(variable)
+  map = bigmap(coord[[1]],coord[[2]])
+  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100, ada=ada, unisex=unisex)
+  df <- req_to_df(urlLoc, query = query)
+  mytext <- paste(
+    "lng: ", df$long, "<br/>", 
+    "lat: ", df$lat, "<br/>",
+    "desc: ", df$directions, "<br/>",
+    "comment: ", df$comment, "<br/>",
+    "ada: ", df$accessible, sep="") %>%
+    lapply(htmltools::HTML)
+  icons <- awesomeIcons(
+    icon = 'ios-close',
+    iconColor = 'black',
+    library = 'ion'
+  )
+  map %>%  addAwesomeMarkers(data = df, lng = ~longitude, lat = ~latitude, label = mytext, icon = icons )
+}
+
+display_map2 <- function(variable){
   coord <- coord_city(variable)
   map = bigmap(coord[[1]],coord[[2]])
   query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100)
@@ -104,15 +132,9 @@ display_map <- function(variable){
     "comment: ", df$comment, "<br/>",
     "ada: ", df$accessible, sep="") %>%
     lapply(htmltools::HTML)
-  map %>% addMarkers(data = df, lng = ~longitude, lat = ~latitude, label = mytext )
+  map %>%  addMarkers(data = df, lng = ~longitude, lat = ~latitude, label = mytext )
 }
 
 ######### brouillon #########
 
-plop <- function(x, df){
-  if (x){
-    df1 <- df %>% filter(accessible =="TRUE")
-  } else {
-    df1 <- df
-  }
-  return(df1)}
+
