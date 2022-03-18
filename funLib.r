@@ -7,7 +7,6 @@ library(ggplot2)
 library(httr)
 library(jsonlite)
 library(leaflet)
-library(leaflet.providers)
 
 ####################################################
 ################ Constantes ########################
@@ -117,13 +116,12 @@ display_map <- function(ada, unisex, city){
     iconColor = 'black',
     library = 'ion'
   )
-  map %>%  addAwesomeMarkers(data = df, lng = ~longitude, lat = ~latitude, label = mytext, icon = icons )
+  map %>%  addAwesomeMarkers(data = df, lng = df$long, lat = df$lat, label = mytext, icon = icons )
 }
 
-display_map2 <- function(variable){
-  coord <- coord_city(variable)
-  map = bigmap(coord[[1]],coord[[2]])
-  query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100)
+display_map2 <- function(ada, unisex, lat, long) {
+  map = bigmap(lng=long,lat=lat)
+  query <- list(lng=long, lat=lat, per_page=100, ada=ada, unisex=unisex)
   df <- req_to_df(urlLoc, query = query)
   mytext <- paste(
     "lng: ", df$long, "<br/>", 
@@ -132,8 +130,12 @@ display_map2 <- function(variable){
     "comment: ", df$comment, "<br/>",
     "ada: ", df$accessible, sep="") %>%
     lapply(htmltools::HTML)
-  map %>%  addMarkers(data = df, lng = ~longitude, lat = ~latitude, label = mytext )
-}
+  icons <- awesomeIcons(
+    icon = 'ios-close',
+    iconColor = 'black',
+    library = 'ion'
+  )
+  map %>%  addAwesomeMarkers(data = df, lng = df$long, lat = df$lat, label = mytext, icon = icons )}
 
 ######### brouillon #########
 

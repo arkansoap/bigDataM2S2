@@ -8,16 +8,23 @@ ui <- fluidPage(
     tabPanel("Tableau", sidebarLayout(
       sidebarPanel(
         selectInput(
-          "city",
-          label = "Choose a city",
-          choices = c("Tours", "London")
+          "mode",
+          label = "choix d'affichage par liste ou par coords",
+          choices = c("liste", "coord")
         ),
         wellPanel(
-          splitLayout(
-            textInput("lng", label = 'lng', value = "2.349014" ),
-            textInput("lat", label = 'lat', value = "48.864716")
+          selectInput(
+            "city",
+            label = "Choose a city",
+            choices = c("Tours", "London")
           ),
-          actionButton("coordOk", label = 'valider')
+          wellPanel(
+            splitLayout(
+              textInput("lng", label = 'lng', value = "2.349014" ),
+              textInput("lat", label = 'lat', value = "48.864716")
+            ),
+            actionButton("coordOk", label = 'valider')
+          )
         ),
         wellPanel(
           checkboxInput("ada", "accessible"),
@@ -34,19 +41,28 @@ ui <- fluidPage(
 
 #Server code (R)
 server <- function(input, output) {
-  output$table_city <- renderDataTable({
-    ville_to_df(input$ada, input$unisex, input$city)
-  })
-  output$map <- renderLeaflet({
-    display_map(input$ada, input$unisex, input$city)
-  })
-  df2 <- eventReactive(input$coordOk,{
+  
+  dfCoord <- eventReactive(c(input$coordOk, input$ada, input$unisex),{
     lat <- input$lat
     long <- input$lng
     query <- list(lng=long, lat=lat, per_page=100, ada=input$ada, unisex=input$unisex)
-    df_trans <- req_to_df(urlLoc, query = query) 
-  })
-  output$table_city2 <- renderDataTable({df2()})
+    df_trans <- req_to_df(urlLoc, query = query)})
+  
+  observe({
+    if (input$mode == "liste"){
+      output$table_city <- renderDataTable({
+        ville_to_df(input$ada, input$unisex, input$city)
+      })
+      output$map <- renderLeaflet({
+        display_map(input$ada, input$unisex, input$city)})
+      }
+    else if (input$mode == "coord"){
+      output$table_city <- renderDataTable({dfCoord()})
+      output$map <- renderLeaflet({
+        display_map2(ada = input$ada, unisex = input$unisex, lat = input$lat, long = input$lng)
+      })
+    }})
+
 }
 
 # to run app
