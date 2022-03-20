@@ -7,6 +7,7 @@ library(ggplot2)
 library(httr)
 library(jsonlite)
 library(leaflet)
+library(plotly)
 
 ####################################################
 ################ Constantes ########################
@@ -29,6 +30,8 @@ ville <- c("Tours", "London")
 lat <- c(47.390185, 51.509865)
 lng <- c(0.689797, -0.118092)
 tablo_coord <- data.frame(ville = ville, lat = lat, lng=lng)
+
+load(file = "refuge_150222-final.RData")
 
 ###################################################
 ############## Fonctions ##########################
@@ -81,6 +84,7 @@ variable <- function(input){
     "London" = "London"
   )
 }
+
 
 ################# Fonctions Output ################
 
@@ -139,4 +143,7 @@ display_map2 <- function(ada, unisex, lat, long) {
 
 ######### brouillon #########
 
+display_classement <- function() {res %>% group_by(country) %>% ggplot() +
+  aes(x = fct_lump(fct_rev(fct_infreq(country)),10)) +
+  geom_bar()+coord_flip()}
 

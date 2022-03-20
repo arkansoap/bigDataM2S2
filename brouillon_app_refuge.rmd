@@ -15,128 +15,14 @@ library(ggplot2)
 library(httr)
 library(jsonlite)
 library(readr)
-```
-
-## Première requète
-
-```{r}
-url_base = "https://www.refugerestrooms.org/api"
-url_byloc = "/v1/restrooms/by_location"
-url_bydate = "/v1/restrooms/by_date"
-url_bysearch= "/v1/restrooms/search"
-url_all="/v1/restrooms"
-```
-
-```{r}
-urlLoc = paste0(url_base, url_byloc)
-urlAll = paste0(url_base, url_all)
+library(leaflet)
 ```
 
 ```{r}
 source("funLib.r")
-
-alldataReq <- function(pagemax){
-  dfA <- data.frame()
-  for (i in 1:pagemax){
-    query <- list(per_page=100, page=i)
-    dfB <- req_to_df("https://www.refugerestrooms.org/api/v1/restrooms",
-                     query = query)
-    dfA <- rbind(dfA, dfB)}
-  return(dfA)
-}
-
-res = alldataReq(488)
 ```
 
-```{r}
-query <- list(lng="0.689797", lat="47.390185")
-resp <- GET(urlLoc, query = query)
-```
-
-```{r}
-resp
-```
-
-```{r}
-headers(resp)
-```
-
-```{r}
-http_error(resp)
-```
-
-```{r}
-http_type(resp)
-```
-
-```{r}
-# Shows raw data which is not structured and readable
-jsonRespText<-content(resp,as="text") 
-```
-
-```{r}
-# Structurised data in form of R vectors and lists
-jsonRespParsed<-content(resp,as="parsed") 
-```
-
-```{r}
-json_cont <- fromJSON(jsonRespText)
-```
-
-## Fonctions
-
-```{r}
-url_base = "https://www.refugerestrooms.org/api"
-url_byloc = "/v1/restrooms/by_location"
-url_bydate = "/v1/restrooms/by_date"
-url_bysearch= "/v1/restrooms/search"
-```
-
-```{r}
-urlLoc = paste0(url_base, url_byloc)
-```
-
-```{r}
-req_to_df <- function(url, query){
-  resp <- GET(urlLoc, query = query)
-  jsonRespText <- content(resp,as="text")
-  json_cont <- fromJSON(jsonRespText)
-  return(json_cont)
-}
-```
-
-```{r}
-query <- list(lng="0.689797", lat="47.390185")
-df2 <- req_to_df(urlLoc, query_Londres)
-```
-
-```{r}
-df_transfo <- function(df){
-  df %>% select(c(name, street, city, state, accessible, unisex, directions, comment))
-} 
-```
-
-```{r}
-df2 <- df_transfo(df)
-```
-
-```{r}
-resp <- get
-```
-
-## Statistiques avec le Rdata (full df)
-
-```{r}
-res %>% group_by(country) %>% ggplot() +
-  aes(x = fct_lump(fct_rev(fct_infreq(country)),10)) +
-  geom_bar()+coord_flip()
-```
-
-## automatisation à partir de liste de villes
-
-```{r}
-source("funLib.r")
-```
+# automatisation à partir de liste de villes
 
 ```{r}
 worldcities <- read_csv("worldcities.csv")
@@ -155,6 +41,8 @@ city_Lng <- worldcities %>% filter(city_ascii == "Tours") %>% pull(lng)
 ```
 
 ```{r}
+# Changer tablo_coord -> worldcities
+
 coord_city <- function(obj){
   city_lat <- tablo_coord %>% filter(ville == obj) %>% pull(lat)
   city_lng <- tablo_coord %>% filter(ville == obj) %>% pull(lng)
@@ -163,87 +51,34 @@ coord_city <- function(obj){
 ```
 
 ```{r}
-test <- coord_city("Tours")
-test
-```
-
-```{r}
 liste_ville = list("Tours", "London")
 ```
 
+# Statistiques avec le Rdata (full df)
+
 ```{r}
-    variable <- switch(
-      input$city,
-      "Tours" = "Tours",
-      "London" = "London"
-    )
+# res = alldataReq(488)
 ```
 
 ```{r}
-display_map <- function(variable){
-  coord <- coord_city(variable)
-  map = bigmap(coord[[1]],coord[[2]])
-  query <- list(lng=coord[[1]], lat=coord[[2]])
-  df <- req_to_df(urlLoc, query = query)
-  map %>% addMarkers(data = df, lng = ~longitude, lat = ~latitude)
-}
+res %>% group_by(country) %>% ggplot() +
+  aes(x = fct_lump(fct_rev(fct_infreq(country)),10)) +
+  geom_bar()+coord_flip()
 ```
 
 ```{r}
-coord <- coord_city("Tours")
-query <- list(lng=coord[[1]], lat=coord[[2]], per_page=100, ada = input$para[1], accessible = inut$para[2])
+# res %>% group_by(updated_at) %>% ggplot() + aes(x= updated_at) + geom_bar()
 ```
 
+# A penser 
 
-```{r}
-  coord <- coord_city("Tours")
-  map = bigmap(coord[[1]],coord[[2]])
-  query <- list(lng=coord[[1]], lat=coord[[2]])
-  df <- req_to_df(urlLoc, query = query)
-  map %>% addMarkers(data = df, lng = ~longitude, lat = ~latitude)
-```
+- page présentation + thème
+- tablo des coordonées villes + liste ds select input
+- retravailler fonction avec redondance
 
-```{r}
-display_map("London")
-```
+- stats : remanier colonne dates pr pouvoir faire regroupement / select un pays d abord pour moins d'entrées (tps calcul)
 
-```{r}
-ville <- c("Tours", "London")
-lat <- c(47.390185, 51.509865)
-lng <- c(0.689797, -0.118092)
-tablo_coord <- data.frame(ville = ville, lat = lat, lng=lng)
-```
+- ajouter date update comme parametre choix tablo -> on choisit une date et ça fait un select des lignes avec dates postérieures / si on select au nivo du df_transfo ds fonction ville_to_df, ca devrait le faire 
+- changer icone marqueur /
 
-```{r}
-ville_to_df <- function(variable){
-  coord <- coord_city(variable)
-  query <- list(lng=coord[[1]], lat=coord[[2]])
-  req_to_df(urlLoc, query = query) %>% df_transfo()
-  return(df_transfo)
-}
-```
-
-```{r}
-test <- ville_to_df("Tours")
-```
-
-```{r}
-plopp <- df %>% filter(unisex == "TRUE")
-```
-
-```{r}
-  get_table <- eventReactive({
-    input$paraOk
-  }, {
-    df <- df %>% filter(input$paraOk == "TRUE")
-  })
-```
-
-```{r}
-  re <- eventReactive({
-    input$paraOk
-  }, {
-    df <- df %>% filter(accessible == input$para[1])
-  })
-```
-
+- plotly pr interactivité (nb de cas ds chaque colonne, ... )

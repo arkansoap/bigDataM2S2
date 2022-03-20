@@ -4,7 +4,23 @@ source("funLib.r")
 ui <- fluidPage(
   titlePanel("Refuge restroom for all"),
   tabsetPanel(
-    tabPanel("Présentation", "contents"),
+    tabPanel("Présentation", splitLayout(
+      img(src = "logo.gif"),
+      verticalLayout(
+        h1("Toilettes LGBT Friendly"),
+        h2("Objectif de l'application"),
+        p("Cette apllication a pour but de reperer les toilettes LGBT Friendly proche de l'utilisateur."),
+        p("Rendez vous sur le site",a("Refuge restroom", href = "https://www.refugerestrooms.org/"), "pour plus de details.",br(), "Vous aurez la possibilite de laisser des commentaires et appreciation des lieux visites"),
+        p("Pour aider a developper la base de donnees, vous pouvez proposer",
+          a("de nouveaux lieux.", href = "https://www.refugerestrooms.org/restrooms/new?")),
+        h2("Objectif pedagogique"),
+        p("L objectif est principalement pedagogique, il s'agissait d'apprendre a developper une",br(), "application Rshiny et decouvrir le fonctionnement de certains packages"),
+        br(),
+        p("For an introduction and live examples, visit the ",
+          a("Shiny homepage.", 
+            href = "http://shiny.rstudio.com"))
+        )
+    )),
     tabPanel("Tableau", sidebarLayout(
       sidebarPanel(
         selectInput(
@@ -35,7 +51,21 @@ ui <- fluidPage(
                 dataTableOutput("table_city"))
     )),
     tabPanel("Carte", leafletOutput('map')),
-    tabPanel("Statistiques")
+    tabPanel("Statistiques", tabsetPanel(
+      tabPanel("stat1",sidebarLayout(
+        sidebarPanel(selectInput("choix",
+                                 label = "Classement par pays ou zoom sur le pays sélectionné",
+                                 choices = c("Pays", "USA", "Canada", "Australie", "Royaume-Uni", "France", "Allemagne", "Nouvelle-Zélande", "Suède", "Irlande")
+        )),
+        mainPanel(plotOutput("classement"))
+      )),
+      tabPanel("stat2", sidebarLayout(
+        sidebarPanel(selectInput("choix2",
+                                 label = "Evolution des ajouts par mois ou par annee",
+                                 choices = c("Mois", "Annee"))),
+        mainPanel(plotlyOutput("evolution"))
+      )),
+    ))
   )
 )
 
@@ -62,7 +92,66 @@ server <- function(input, output) {
         display_map2(ada = input$ada, unisex = input$unisex, lat = input$lat, long = input$lng)
       })
     }})
-
+  
+  observe({
+    if (input$choix == "Pays"){
+      output$classement <- renderPlot({
+        res %>% group_by(country) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(country)),10)) +
+          geom_bar()+coord_flip()+xlab("Pays")+ylab("")})
+    } else if (input$choix == "USA"){
+      output$classement <- renderPlot({subset(res,country=="US") %>% group_by(state) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(state)),10)) +
+          geom_bar()+coord_flip()+xlab("Etats")+ylab("")})}
+    else if (input$choix == "Canada"){
+      output$classement <- renderPlot({subset(res,country=="CA") %>% group_by(state) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(state)),10)) +
+          geom_bar()+coord_flip()+xlab("Etats")+ylab("")})}
+    else if (input$choix == "Australie"){
+      output$classement <- renderPlot({subset(res,country=="AU") %>% group_by(state) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(state)),10)) +
+          geom_bar()+coord_flip()+xlab("Etats")+ylab("")})}
+    else if (input$choix == "Royaume-Uni"){
+      output$classement <- renderPlot({subset(res,country=="GB") %>% group_by(city) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(city)),10)) +
+          geom_bar()+coord_flip()+xlab("Villes")+ylab("")})}
+    else if (input$choix == "France"){
+      output$classement <- renderPlot({subset(res,country=="FR") %>% group_by(city) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(city)),10)) +
+          geom_bar()+coord_flip()+xlab("Villes")+ylab("")})}
+    else if (input$choix == "Allemagne"){
+      output$classement <- renderPlot({subset(res,country=="DE") %>% group_by(city) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(city)),10)) +
+          geom_bar()+coord_flip()+xlab("Villes")+ylab("")})}
+    else if (input$choix == "Nouvelle-Zélande"){
+      output$classement <- renderPlot({subset(res,country=="NZ") %>% group_by(city) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(city)),10)) +
+          geom_bar()+coord_flip()+xlab("Villes")+ylab("")})}
+    else if (input$choix == "Suède"){
+      output$classement <- renderPlot({subset(res,country=="SE") %>% group_by(city) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(city)),10)) +
+          geom_bar()+coord_flip()+xlab("Villes")+ylab("")})}
+    else if (input$choix == "Irlande"){
+      output$classement <- renderPlot({subset(res,country=="IE") %>% group_by(city) %>% ggplot() +
+          aes(x = fct_lump(fct_rev(fct_infreq(city)),10)) +
+          geom_bar()+coord_flip()+xlab("Villes")+ylab("")})}
+  })
+  
+  observe({
+    if(input$choix2 == "Mois"){
+      output$evolution <- renderPlotly({ggplotly(ggplot(res) +
+                                                   geom_bar(aes(x = updated_at), 
+                                                            position = "dodge", stat = "count") + 
+                                                   scale_x_date(date_labels = "%m-%Y")+
+                                                   xlab("Annee") + ylab("Nombre d ajouts"))})}
+    else if(input$choix2 == "Annee"){
+      output$evolution <- renderPlotly({ggplotly(
+        ggplot(res) + geom_bar(aes(x = year), position = "dodge", stat = "count") +
+          scale_x_continuous(breaks=c(2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022)) +
+          xlab("Annee") + ylab("Nombre d ajouts"))})}
+    
+  })
+  
 }
 
 # to run app
