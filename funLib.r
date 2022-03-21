@@ -26,9 +26,10 @@ urlAll = paste0(url_base, url_all)
 
 totalPage = 488
 
-ville <- c("Tours", "London")
-lat <- c(47.390185, 51.509865)
-lng <- c(0.689797, -0.118092)
+
+ville <- c("Tours", "London", "Berlin", "New-York")
+lat <- c(47.390185, 51.509865, 52.529076, 40.764792)
+lng <- c(0.689797, -0.118092, 13.388985, -73.985225)
 tablo_coord <- data.frame(ville = ville, lat = lat, lng=lng)
 
 load(file = "refuge_150222-final.RData")
@@ -81,7 +82,9 @@ variable <- function(input){
   switch(
     input,
     "Tours" = "Tours",
-    "London" = "London"
+    "London" = "London",
+    "Berlin" = "Berlin",
+    "New-York" = "New-York"
   )
 }
 
